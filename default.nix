@@ -1,6 +1,9 @@
 {
   rustPlatform,
   lib,
+  pkg-config,
+  gtk3,
+  gtk-layer-shell,
 }: let
   inherit (rustPlatform) buildRustPackage;
 
@@ -13,6 +16,12 @@ in
     src = ./.;
 
     cargoLock.lockFile = ./Cargo.lock;
+
+    nativeBuildInputs = [pkg-config];
+    buildInputs = [
+    gtk3
+    gtk-layer-shell
+    ];
 
     meta = with lib; {
       description = "A layer shell program that renders information you would with a bar as your background instead.";
