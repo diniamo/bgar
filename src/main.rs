@@ -2,12 +2,10 @@ use std::{thread, time::Duration};
 
 use chrono::{format::StrftimeItems, Local};
 use gtk::{
-    gdk::Screen,
+    gdk::{Display, Screen},
     gio,
     glib::{self, clone},
-    prelude::{
-        ApplicationExt, ApplicationExtManual, ContainerExt, CssProviderExt, LabelExt, WidgetExt,
-    },
+    prelude::{ApplicationExt, ApplicationExtManual, ContainerExt, CssProviderExt, WidgetExt},
     Application, ApplicationWindow, Box, CssProvider, Label, Orientation, StyleContext,
     STYLE_PROVIDER_PRIORITY_APPLICATION,
 };
@@ -26,20 +24,31 @@ fn main() {
             STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
 
-        let window = ApplicationWindow::new(app);
-        window.init_layer_shell();
-        window.set_namespace("bgar");
-        window.set_layer(Layer::Background);
+        let display = Display::default().expect("Failed to get the default display");
+        let monitor_count = display.n_monitors() as usize;
 
-        let vbox = Box::new(Orientation::Vertical, 0);
+        // The labels don't show if they don't have initial text
+        let times = vec![Label::builder().label(" ").name("time").build(); monitor_count];
+        let cpus = vec![Label::builder().label(" ").name("cpu").build(); monitor_count];
 
-        let time = Label::builder().name("time").build();
-        let cpu = Label::builder().name("cpu").build();
-        vbox.add(&time);
-        vbox.add(&cpu);
+        let vboxes = vec![Box::new(Orientation::Vertical, 0); monitor_count];
+        for (i, vbox) in vboxes.iter().enumerate() {
+            vbox.add(&times[i]);
+            vbox.add(&cpus[i]);
+        }
 
-        window.add(&vbox);
-        window.show_all();
+        for i in 0..monitor_count {
+            let window = ApplicationWindow::new(app);
+
+            window.init_layer_shell();
+            window.set_namespace("bgar");
+            window.set_layer(Layer::Background);
+
+            window.add(&vboxes[i]);
+
+            window.set_monitor(&display.monitor(i as i32).unwrap());
+            window.show_all();
+        }
 
         let (sender, receiver) = async_channel::bounded(1);
 
@@ -68,10 +77,10 @@ fn main() {
             }
         });
 
-        glib::spawn_future_local(clone!(@weak time, @weak cpu => async move {
+        glib::spawn_future_local(clone!(@weak times, @weak cpus => async move {
             while let Ok((time_label, cpu_label)) = receiver.recv().await {
-                time.set_label(&time_label);
-                cpu.set_label(&cpu_label);
+                times.for_each(|t| t.set_label(&time_label));
+                cpus.for_each(|t| t.set_label(&cpu_label));
             }
         }));
     });
