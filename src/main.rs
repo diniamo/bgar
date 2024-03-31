@@ -5,15 +5,30 @@ use gtk::{
     gdk::{Display, Screen},
     gio,
     glib::{self, clone},
-    prelude::{ApplicationExt, ApplicationExtManual, ContainerExt, CssProviderExt, WidgetExt},
+    prelude::{
+        ApplicationExt, ApplicationExtManual, ContainerExt, CssProviderExt, LabelExt, WidgetExt,
+    },
     Application, ApplicationWindow, Box, CssProvider, Label, Orientation, StyleContext,
     STYLE_PROVIDER_PRIORITY_APPLICATION,
 };
 use gtk_layer_shell::{Layer, LayerShell};
 use sysinfo::{CpuRefreshKind, RefreshKind, System};
 
+macro_rules! build_vec {
+    [$expr:expr; $size:expr] => {
+        {
+            let mut vec = Vec::with_capacity($size);
+            for _ in 0..$size {
+                vec.push($expr);
+            }
+            vec
+        }
+    };
+}
+
 fn main() {
     let application = Application::new(Some("me.diniamo.bgar"), Default::default());
+
     application.connect_activate(|app| {
         let css = CssProvider::new();
         css.load_from_data(include_bytes!("../res/style.css"))
@@ -28,10 +43,12 @@ fn main() {
         let monitor_count = display.n_monitors() as usize;
 
         // The labels don't show if they don't have initial text
-        let times = vec![Label::builder().label(" ").name("time").build(); monitor_count];
-        let cpus = vec![Label::builder().label(" ").name("cpu").build(); monitor_count];
+        let times: Vec<Label> =
+            build_vec![Label::builder().label(" ").name("time").build(); monitor_count];
+        let cpus: Vec<Label> =
+            build_vec![Label::builder().label(" ").name("cpu").build(); monitor_count];
 
-        let vboxes = vec![Box::new(Orientation::Vertical, 0); monitor_count];
+        let vboxes = build_vec![Box::new(Orientation::Vertical, 0); monitor_count];
         for (i, vbox) in vboxes.iter().enumerate() {
             vbox.add(&times[i]);
             vbox.add(&cpus[i]);
@@ -77,12 +94,13 @@ fn main() {
             }
         });
 
-        glib::spawn_future_local(clone!(@weak times, @weak cpus => async move {
+        glib::spawn_future_local(clone!(@strong times, @strong cpus => async move {
             while let Ok((time_label, cpu_label)) = receiver.recv().await {
-                times.for_each(|t| t.set_label(&time_label));
-                cpus.for_each(|t| t.set_label(&cpu_label));
+                times.iter().for_each(|t| t.set_label(&time_label));
+                cpus.iter().for_each(|t| t.set_label(&cpu_label));
             }
         }));
     });
+
     application.run();
 }
