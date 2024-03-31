@@ -54,14 +54,14 @@ fn main() {
             vbox.add(&cpus[i]);
         }
 
-        for i in 0..monitor_count {
+        for (i, vbox) in vboxes.iter().enumerate() {
             let window = ApplicationWindow::new(app);
 
             window.init_layer_shell();
             window.set_namespace("bgar");
             window.set_layer(Layer::Background);
 
-            window.add(&vboxes[i]);
+            window.add(vbox);
 
             window.set_monitor(&display.monitor(i as i32).unwrap());
             window.show_all();
