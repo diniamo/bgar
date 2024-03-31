@@ -19,14 +19,16 @@
         ...
       }: let
         inherit (pkgs) callPackage;
+
+        bgar = callPackage ./. {};
       in {
         formatter = pkgs.alejandra;
 
-        devShells.default = callPackage ./shell.nix {};
+        devShells.default = callPackage ./shell.nix {inherit bgar;};
 
-        packages = rec {
-          default = callPackage ./. {};
-          bgar = default;
+        packages = {
+          default = bgar;
+          inherit bgar;
         };
       };
 

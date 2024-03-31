@@ -9,18 +9,21 @@
 
   cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
 in
-  buildRustPackage {
+  buildRustPackage rec {
     pname = cargoToml.package.name;
     version = cargoToml.package.version;
 
-    src = ./.;
+    src = builtins.path {
+      name = "${pname}-source";
+      path = ./.;
+    };
 
     cargoLock.lockFile = ./Cargo.lock;
 
     nativeBuildInputs = [pkg-config];
     buildInputs = [
-    gtk3
-    gtk-layer-shell
+      gtk3
+      gtk-layer-shell
     ];
 
     meta = with lib; {

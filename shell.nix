@@ -5,13 +5,10 @@
   rust-analyzer,
   clippy,
   rustfmt,
-  rustc,
-  cargo,
-  pkg-config,
-  gtk3,
-  gtk-layer-shell
+  bgar,
 }:
 mkShell {
+  inputsFrom = [bgar];
   packages = [
     # Nix
     statix
@@ -21,13 +18,5 @@ mkShell {
     rust-analyzer
     clippy
     rustfmt
-
-    # Build
-    rustc
-    cargo
-
-    pkg-config
-    gtk3
-    gtk-layer-shell
   ];
 }
