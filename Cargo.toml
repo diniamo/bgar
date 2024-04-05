@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 async-channel = "2.2.0"
-chrono = { version = "0.4.37", features = [] }
+chrono = { version = "0.4.37", default-features = false, features = ["std", "clock"] }
 gtk = "0.18.1"
 gtk-layer-shell = "0.8.0"
 sysinfo = "0.30.7"
