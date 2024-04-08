@@ -18,9 +18,7 @@
         system,
         ...
       }: let
-        inherit (pkgs) callPackage;
-
-        bgar = callPackage ./. {};
+        bgar = pkgs.callPackage ./. {};
       in {
         formatter = pkgs.alejandra;
 
