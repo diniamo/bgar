@@ -24,7 +24,19 @@
       in {
         formatter = pkgs.alejandra;
 
-        devShells.default = callPackage ./shell.nix {inherit bgar;};
+        devShells.default = pkgs.mkShell {
+          inputsFrom = [bgar];
+          packages = with pkgs; [
+            # Nix
+            statix
+            deadnix
+
+            # Develop
+            rust-analyzer
+            clippy
+            rustfmt
+          ];
+        };
 
         packages = {
           default = bgar;
